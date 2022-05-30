@@ -12,18 +12,21 @@ bot = telebot.TeleBot(TOKEN)
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
 
+    conn = sqlite3.connect('db/users.db')
+    cur = conn.cursor()
+    userID = message.from_user.id
+    userName = message.from_user.username
+
     # ОСНОВНОЕ МЕНЮ
     mainMenu = types.ReplyKeyboardMarkup(row_width=2)
     checkBalance = types.KeyboardButton('Баланс')
     addCart = types.KeyboardButton('Добавить карту')
     pay = types.KeyboardButton('Пополнить баланс')
     mainMenu.add(checkBalance, addCart, pay)
-    bot.send_message(message.chat.id, "Привет " + message.from_user.username + '!\n\nЯ - бот который поможет следить за балансом на карте "Подорожник". Добавьте свою карту и начните следить за своим балансом.\n\nПо вопросам и предложениям @MaxWatson', reply_markup=mainMenu)
+    cur.execute("SELECT userid FROM users")
+    allusers = len(cur.fetchall())
+    bot.send_message(message.chat.id, "Привет " + message.from_user.username + '!\n\nЯ - бот который поможет следить за балансом на карте "Подорожник". Добавьте свою карту и начните следить за своим балансом.\nПользователей' + str(allusers) +'\n\nПо вопросам и предложениям @MaxWatson', reply_markup=mainMenu)
 
-    conn = sqlite3.connect('db/users.db')
-    cur = conn.cursor()
-    userID = message.from_user.id
-    userName = message.from_user.username
     try:
         cur.execute("""INSERT INTO users(userid, username, carNumber, lastBalance) 
                 VALUES (?,?,?,?);""", (userID, userName, 0, 0))
